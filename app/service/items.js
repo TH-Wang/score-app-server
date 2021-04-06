@@ -4,6 +4,7 @@ const Service = require('egg').Service;
 
 class ItemsService extends Service {
 
+  // 添加单个评分项
   async insert({ projectId, title, type, ...rest }) {
     const { ctx, app } = this;
     const conn = await app.mysql.beginTransaction();
@@ -18,8 +19,18 @@ class ItemsService extends Service {
       if (!rest.sort || rest.sort <= value) {
         sort = Number(value) + 1;
       } else sort = rest.sort;
+
       // 插入所有数据
       result = await conn.insert('items', { projectId, title, type, sort });
+
+      // 如果有options，则插入到options表
+      if (rest.options) {
+        const { insertId } = result;
+        const options = rest.options.map(i => (Object.assign(i, { itemId: insertId })));
+        await conn.insert('options', options);
+      }
+
+      // 提交事务
       await conn.commit();
     } catch (error) {
       // 捕获异常后回滚事务
@@ -37,6 +48,40 @@ class ItemsService extends Service {
   async insertAll(projectId, items) {
     const datas = items.map(i => Object.assign(i, { projectId }));
     return await this.app.mysql.insert('items', datas);
+  }
+
+  // 查询某个项目的所有评分项
+  async findAll(projectId) {
+    return await this.app.mysql.select('items', {
+      where: { projectId },
+      orders: [[ 'sort' ]],
+    });
+  }
+
+  // 修改
+  async update(data) {
+    const { ctx, app } = this;
+    const result = await app.mysql.beginTransactionScope(async conn => {
+      let itemData = data;
+      // 如果传了 options，更新所有options
+      if (data.options) {
+        const { options, ...rest } = data;
+        options.forEach(async option => {
+          await conn.update('options', option);
+        });
+        itemData = rest;
+      }
+      // 更新 items
+      return await conn.update('items', itemData);
+    }, ctx);
+
+    return result.affectedRows === 1;
+  }
+
+  // 删除
+  async delete(id) {
+    const result = await this.app.mysql.delete('items', { id });
+    return result.affectedRows === 1;
   }
 }
 

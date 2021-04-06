@@ -12,6 +12,26 @@ class ProjectController extends Controller {
     ctx.response.success(result || [], '查询成功');
   }
 
+  // 查询用户创建的项目
+  async indexOfUser() {
+    const { ctx } = this;
+    const { userId } = ctx.params;
+    ctx.validate({ userId: 'id' }, { userId });
+
+    const result = await ctx.service.project.findProjectByUser(userId);
+    ctx.response.success(result, '查询成功');
+  }
+
+  // 查询用户参与过的项目
+  async indexOfJoin() {
+    const { ctx } = this;
+    const { userId } = ctx.params;
+    ctx.validate({ userId: 'id' }, { userId });
+
+    const result = await ctx.service.project.findUserJoin(userId);
+    ctx.response.success(result, '查询成功');
+  }
+
   // 创建项目
   /**
    * @fail 1001 用户未注册
@@ -73,8 +93,10 @@ class ProjectController extends Controller {
       needAuth: [ '0', '1' ],
     };
     const { id } = ctx.params;
-    const { pname, isTemplate, needAuth } = ctx.request.body;
-    const data = { projectId: id, pname, isTemplate, needAuth };
+    const body = ctx.request.body;
+    if (body.isTemplate) rules.isTemplate = [ '0', '1' ];
+    if (body.needAuth) rules.needAuth = [ '0', '1' ];
+    const data = Object.assign(body, { id });
 
     ctx.validate(rules, data);
 
@@ -123,6 +145,16 @@ class ProjectController extends Controller {
     result
       ? ctx.response.success(result, '删除成功')
       : ctx.response.fail(1003, '删除失败', '删除失败，请稍后再试');
+  }
+
+  // 增加项目点击量
+  async hits() {
+    const { ctx } = this;
+    const { id } = ctx.params;
+    ctx.validate({ id: 'id' }, { id });
+
+    const result = await ctx.service.project.addHits(id);
+    ctx.response.success(result, '点击量+1');
   }
 }
 

@@ -6,7 +6,7 @@ module.exports = () => {
       await next();
     } catch (err) {
       if (err.status === 422) {
-        ctx.body = { errors: err.errors, message: '参数错误' };
+        ctx.response.error(422, err.errors, '参数错误');
       } else {
         console.log(err);
         ctx.response.error(500, 'error', err.errors);
