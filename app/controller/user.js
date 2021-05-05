@@ -1,4 +1,6 @@
 'use strict';
+const jwtConfig = require('../../config/config.default')({ name: '' }).jwt;
+const { encrypt } = require('../utils/crypt');
 
 const Controller = require('egg').Controller;
 const unPwdRules = {
@@ -44,9 +46,13 @@ class UserController extends Controller {
     // 验证用户信息是否匹配
     const { valid, result } = await ctx.service.user.validate({ username, password });
     if (valid) {
-      ctx.response.success(result, '登录成功');
+      const token = encrypt(jwtConfig.secret, {
+        userId: result.id,
+        _sign: Date.now(),
+      });
+      ctx.response.success(Object.assign(result, { token }), '登录成功');
     } else {
-      ctx.response.fail(1001, '登录失败', '用户名或密码错误');
+      ctx.response.fail(1001, '登录失败', '对不起，用户名或密码错误，请重试');
     }
   }
 

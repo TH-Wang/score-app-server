@@ -52,10 +52,19 @@ class ItemsService extends Service {
 
   // 查询某个项目的所有评分项
   async findAll(projectId) {
-    return await this.app.mysql.select('items', {
-      where: { projectId },
-      orders: [[ 'sort' ]],
+    const result = await this.app.mysql.beginTransactionScope(async conn => {
+      const items = await conn.select('items', {
+        where: { projectId },
+        orders: [[ 'sort' ]],
+      });
+      items.forEach(async item => {
+        item.options = await conn.select('options', {
+          where: { itemId: item.id },
+        });
+      });
+      return items;
     });
+    return result;
   }
 
   // 修改

@@ -1,6 +1,7 @@
 'use strict';
 
 const Service = require('egg').Service;
+const condition = require('../utils/condition');
 
 class ProjectService extends Service {
 
@@ -19,11 +20,26 @@ class ProjectService extends Service {
     return await this.app.mysql.get('projects', { id });
   }
 
+  // 查询公开评分项目
+  async findPublicProject({ page, size }) {
+    const { mysql } = this.app;
+    const condition = `FROM projects WHERE isTemplate=0 LIMIT ${(page - 1) * size},${size}`;
+    const rows = await mysql.query('SELECT * ' + condition);
+    const count = await mysql.query('SELECT COUNT(1) AS total ' + condition);
+    const lastPage = Math.ceil(count / size);
+    return { rows, count, lastPage };
+  }
+
   // 通过userId查询项目列表
   async findProjectByUser(userId) {
-    return await this.app.mysql.select('projects', {
-      where: { userId },
+    const { mysql } = this.app;
+    const projects = await mysql.select('projects', {
+      where: { userId, isTemplate: 0 },
     });
+    const templates = await mysql.select('projects', {
+      where: { userId, isTemplate: 1 },
+    });
+    return { projects, templates };
   }
 
   // 通过userId，查询该用户参与过的项目
@@ -45,10 +61,41 @@ class ProjectService extends Service {
   }
 
   // 查询所有模板
-  async findAllTemplate() {
-    return await this.app.mysql.select('projects', {
-      where: { isTemplate: 1 },
-    });
+  async findTemplates({ tag, keyword, page, size }) {
+    const { mysql } = this.app;
+
+    let rowsSql = `
+      SELECT p.id, p.pname, p.cover, p.hits, u.username AS creator
+      FROM projects p LEFT JOIN users u ON p.userId = u.id
+    `;
+    let countSql = 'SELECT COUNT(1) AS total FROM projects';
+
+    const rowsWhere = {};
+    const countWhere = {};
+
+    if (tag) {
+      rowsWhere['p.tag'] = tag;
+      countWhere.tag = tag;
+    }
+    if (keyword && keyword.length > 0) {
+      rowsWhere['p.pname'] = { like: `%${keyword}%` };
+      countWhere.pname = { like: `%${keyword}%` };
+    }
+
+    rowsSql += condition(rowsWhere);
+    countSql += condition(countWhere);
+
+    const offset = (page - 1) * size;
+    rowsSql += ` LIMIT ${offset},${size}`;
+
+    // 查询列表
+    const rows = await mysql.query(rowsSql);
+
+    // 查询总数
+    const count = await mysql.query(countSql);
+    const total = count[0].total;
+    const lastPage = Math.ceil(total / size);
+    return { rows, total, lastPage };
   }
 
   // 根据名称查询模板

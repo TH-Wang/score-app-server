@@ -8,8 +8,36 @@ class ProjectController extends Controller {
   // 查询模板列表
   async index() {
     const { ctx } = this;
-    const result = await ctx.service.project.findAllTemplate();
-    ctx.response.success(result || [], '查询成功');
+    const rules = {
+      page: /\d+/,
+      size: /\d+/,
+    };
+    if (ctx.query.tag) {
+      rules.tag = [ '1', '2', '3', '4', 1, 2, 3, 4, null, undefined ];
+    }
+    ctx.validate(rules, ctx.query);
+
+    const { tag, keyword, page, size } = ctx.query;
+
+    const result = await ctx.service.project.findTemplates({
+      tag: tag || null,
+      keyword,
+      page,
+      size,
+    });
+    ctx.response.success(result || {}, '查询成功');
+  }
+
+  // 查询公开评分项目
+  async indexOfPublic() {
+    const { ctx } = this;
+    const rules = {
+      page: /\d+/,
+      size: /\d+/,
+    };
+    ctx.validate(rules, ctx.query);
+    const result = await ctx.service.project.findPublicProject(ctx.query);
+    ctx.response.success(result || {}, '查询成功');
   }
 
   // 查询用户创建的项目
@@ -39,43 +67,41 @@ class ProjectController extends Controller {
    */
   async create() {
     const { ctx } = this;
+    const body = ctx.request.body;
 
     // 校验参数
     const rules = {
-      userId: 'id',
+      userId: 'number',
       pname: 'string',
-      isTemplate: [ '0', '1' ],
-      needAuth: [ '0', '1' ],
+      isTemplate: [ '0', '1', 0, 1 ],
+      needAuth: [ '0', '1', 0, 1 ],
     };
+    if (body.tag) {
+      rules.tag = [ '1', '2', '3', '4', 1, 2, 3, 4, null, undefined ];
+    }
     ctx.validate(rules, ctx.request.body);
 
-    const { userId, pname, isTemplate, needAuth } = ctx.request.body;
-
     // 验证用户id是否存在
-    const existUser = await ctx.service.user.find(userId);
+    const existUser = await ctx.service.user.find(body.userId);
     if (!existUser) {
       ctx.response.fail(1001, '用户未注册', '当前用户未注册，请注册并登录后再创建项目');
       return;
     }
 
     // 如果是模板，查询是否已创建
-    const existTem = await ctx.service.project.findTemByName(pname);
-    if (existTem.length) {
-      ctx.response.fail(1002, '模板已存在', `模板 '${pname}' 已经存在，请修改后重试`);
-      return;
-    }
+    // const existTem = await ctx.service.project.findTemByName(pname);
+    // if (existTem.length) {
+    //   ctx.response.fail(1002, '模板已存在', `模板 '${pname}' 已经存在，请修改后重试`);
+    //   return;
+    // }
 
     // 创建时间
     const datetime = ctx.helper.getTime();
     // 完整数据
-    const data = {
-      userId,
-      pname,
-      isTemplate,
-      needAuth,
+    const data = Object.assign({}, body, {
       createAt: datetime,
       updateAt: datetime,
-    };
+    });
 
     // 插入数据库
     const result = await ctx.service.project.insert(data);
@@ -91,6 +117,7 @@ class ProjectController extends Controller {
       pname: 'string?',
       isTemplate: [ '0', '1' ],
       needAuth: [ '0', '1' ],
+      tag: [ '1', '2', '3', '4', 1, 2, 3, 4, null, undefined ],
     };
     const { id } = ctx.params;
     const body = ctx.request.body;

@@ -14,6 +14,7 @@ module.exports = app => {
   router.post('/user/login/pwd', controller.user.loginByPassword);
 
   router.get('/project/template', controller.project.index);
+  router.get('/project/public', controller.project.indexOfPublic);
   router.get('/project/user/:userId', controller.project.indexOfUser);
   router.get('/project/join/:userId', controller.project.indexOfJoin);
   router.post('/project', controller.project.create);
@@ -30,4 +31,6 @@ module.exports = app => {
   router.get('/result/item/:itemId', controller.result.queryByItemId);
   router.get('/result/project/:projectId', controller.result.index);
   router.post('/result', controller.result.create);
+
+  router.post('/upload', controller.upload.index);
 };

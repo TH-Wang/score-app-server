@@ -2,6 +2,8 @@
 
 'use strict';
 
+const path = require('path');
+
 /**
  * @param {Egg.EggAppInfo} appInfo app info
  */
@@ -22,8 +24,17 @@ module.exports = appInfo => {
     },
   };
 
+  // jwt config
+  config.jwt = {
+    ignore: /(login|register|template|public)/g,
+    // 密钥
+    secret: '1545asd1z5cvsdf456a4sd8a5s1',
+    // 过期事件，毫秒
+    expire: 30 * 60 * 1000,
+  };
+
   // add your middleware config here
-  config.middleware = [ 'errorHandler' ];
+  config.middleware = [ 'errorHandler', 'jwt' ];
 
   // mysql connect config
   config.mysql = {
@@ -50,6 +61,10 @@ module.exports = appInfo => {
   config.cors = {
     origin: '*',
     allowMethods: 'GET,HEAD,PUT,POST,DELETE,PATCH',
+  };
+
+  exports.multipart = {
+    mode: 'file',
   };
 
   // add your user config here
