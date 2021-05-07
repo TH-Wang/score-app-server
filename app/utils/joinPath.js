@@ -6,14 +6,14 @@ function join(name) {
   return baseURL + '/' + name;
 }
 
-function insert(data, field) {
+function inject(data, field) {
   data.forEach(item => {
-    item[field] = baseURL + '/' + item[field];
+    item[`_path_${field}`] = baseURL + '/' + item[field];
   });
   return data;
 }
 
 module.exports = {
   join,
-  insert,
+  inject,
 };

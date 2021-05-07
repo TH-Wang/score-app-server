@@ -2,6 +2,7 @@
 
 const Service = require('egg').Service;
 const condition = require('../utils/condition');
+const { join, inject } = require('../utils/joinPath');
 
 class ProjectService extends Service {
 
@@ -17,14 +18,17 @@ class ProjectService extends Service {
 
   // 通过id查询项目信息
   async find(id) {
-    return await this.app.mysql.get('projects', { id });
+    const result = await this.app.mysql.get('projects', { id });
+    result._path_cover = join(result.cover);
+    return result;
   }
 
   // 查询公开评分项目
   async findPublicProject({ page, size }) {
     const { mysql } = this.app;
     const condition = `FROM projects WHERE isTemplate=0 LIMIT ${(page - 1) * size},${size}`;
-    const rows = await mysql.query('SELECT * ' + condition);
+    let rows = await mysql.query('SELECT * ' + condition);
+    rows = inject(rows, 'cover');
     const count = await mysql.query('SELECT COUNT(1) AS total ' + condition);
     const lastPage = Math.ceil(count / size);
     return { rows, count, lastPage };
@@ -33,12 +37,17 @@ class ProjectService extends Service {
   // 通过userId查询项目列表
   async findProjectByUser(userId) {
     const { mysql } = this.app;
-    const projects = await mysql.select('projects', {
+
+    let projects = await mysql.select('projects', {
       where: { userId, isTemplate: 0 },
     });
-    const templates = await mysql.select('projects', {
+    projects = inject(projects, 'cover');
+
+    let templates = await mysql.select('projects', {
       where: { userId, isTemplate: 1 },
     });
+    templates = inject(templates, 'cover');
+
     return { projects, templates };
   }
 
@@ -54,6 +63,7 @@ class ProjectService extends Service {
     const result = await this.app.mysql.query(sql, [ userId ]);
     result.forEach(item => {
       item.isOwnCreate = item.creator === Number(userId);
+      item.cover = join(item.cover);
       delete item.userId;
       delete item.creator;
     });
@@ -89,7 +99,8 @@ class ProjectService extends Service {
     rowsSql += ` LIMIT ${offset},${size}`;
 
     // 查询列表
-    const rows = await mysql.query(rowsSql);
+    let rows = await mysql.query(rowsSql);
+    rows = inject(rows, 'cover');
 
     // 查询总数
     const count = await mysql.query(countSql);
@@ -100,9 +111,11 @@ class ProjectService extends Service {
 
   // 根据名称查询模板
   async findTemByName(pname) {
-    return await this.app.mysql.select('projects', {
+    let result = await this.app.mysql.select('projects', {
       where: { isTemplate: 1, pname },
     });
+    result = inject(result, 'cover');
+    return result;
   }
 
   // 修改项目信息
@@ -112,7 +125,13 @@ class ProjectService extends Service {
       where: { id },
     });
     if (result.affectedRows !== 1) return null;
+    data._path_cover = join(data.cover);
     return data;
+  }
+
+  // 更新项目状态
+  async updateState(id, state) {
+    await this.app.mysql.update('projects', { state }, { where: { id } });
   }
 
   // 查询项目的创建者id

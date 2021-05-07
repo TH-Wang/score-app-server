@@ -73,7 +73,7 @@ class ItemsController extends Controller {
         type: 'array',
         itemType: 'object',
         rule: {
-          id: 'number',
+          id: 'number?',
           label: 'string',
           value: 'number',
         },

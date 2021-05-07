@@ -24,21 +24,21 @@ class ItemsService extends Service {
       result = await conn.insert('items', { projectId, title, type, sort });
 
       // 如果有options，则插入到options表
-      if (rest.options) {
+      if (rest.options && rest.options.length) {
         const { insertId } = result;
         const options = rest.options.map(i => (Object.assign(i, { itemId: insertId })));
         await conn.insert('options', options);
       }
-
       // 提交事务
       await conn.commit();
     } catch (error) {
+      console.log(error);
       // 捕获异常后回滚事务
       await conn.rollback();
       ctx.response.error(500, 'sql error', error.message);
     }
 
-    console.log(result);
+    // console.log(result);
 
     if (result.affectedRows === 1) return result.insertId;
     return null;
@@ -76,7 +76,11 @@ class ItemsService extends Service {
       if (data.options) {
         const { options, ...rest } = data;
         options.forEach(async option => {
-          await conn.update('options', option);
+          if (option.id) {
+            await conn.update('options', option);
+          } else {
+            await conn.insert('options', Object.assign({ itemId: rest.id }, option));
+          }
         });
         itemData = rest;
       }

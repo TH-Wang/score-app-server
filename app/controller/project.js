@@ -2,6 +2,7 @@
 'use strict';
 
 const Controller = require('egg').Controller;
+const moment = require('moment');
 
 class ProjectController extends Controller {
 
@@ -60,6 +61,14 @@ class ProjectController extends Controller {
     ctx.response.success(result, '查询成功');
   }
 
+  // 查询项目详情(基本)信息
+  async show() {
+    const { ctx } = this;
+    const { id } = ctx.params;
+    const result = await ctx.service.project.find(id);
+    ctx.response.success(result, '查询成功');
+  }
+
   // 创建项目
   /**
    * @fail 1001 用户未注册
@@ -113,19 +122,28 @@ class ProjectController extends Controller {
     const { ctx } = this;
 
     const rules = {
-      projectId: 'id',
+      id: 'id',
       pname: 'string?',
-      isTemplate: [ '0', '1' ],
-      needAuth: [ '0', '1' ],
-      tag: [ '1', '2', '3', '4', 1, 2, 3, 4, null, undefined ],
     };
     const { id } = ctx.params;
     const body = ctx.request.body;
-    if (body.isTemplate) rules.isTemplate = [ '0', '1' ];
-    if (body.needAuth) rules.needAuth = [ '0', '1' ];
+    if (body.isTemplate) rules.isTemplate = [ '0', '1', 0, 1 ];
+    if (body.needAuth) rules.needAuth = [ '0', '1', 0, 1 ];
+    if (body.tag) {
+      rules.tag = [ '1', '2', '3', '4', 1, 2, 3, 4, null, undefined ];
+    }
     const data = Object.assign(body, { id });
 
     ctx.validate(rules, data);
+
+    // 删除不用插入的字段
+    if (data._path_cover) delete data._path_cover;
+    delete data.createAt;
+
+    // 获取当前时间做为更新时间
+    data.updateAt = ctx.helper.getTime();
+    // 校正截止日期的格式
+    data.closing = moment(data.closing).format('YYYY-MM-DD hh:mm:ss');
 
     const result = await ctx.service.project.update(data);
     if (!result) {
@@ -133,6 +151,14 @@ class ProjectController extends Controller {
       return;
     }
     ctx.response.success(data, '修改成功');
+  }
+
+  // 发布项目
+  async release() {
+    const { ctx } = this;
+    const { id } = ctx.params;
+    await ctx.service.project.updateState(id, 1);
+    ctx.response.success(id, '发布成功');
   }
 
   // 删除项目

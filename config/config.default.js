@@ -2,7 +2,7 @@
 
 'use strict';
 
-const path = require('path');
+// const path = require('path');
 
 /**
  * @param {Egg.EggAppInfo} appInfo app info
@@ -30,7 +30,7 @@ module.exports = appInfo => {
     // 密钥
     secret: '1545asd1z5cvsdf456a4sd8a5s1',
     // 过期事件，毫秒
-    expire: 30 * 60 * 1000,
+    expire: 60 * 60 * 1000,
   };
 
   // add your middleware config here

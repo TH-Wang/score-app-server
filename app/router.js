@@ -17,7 +17,9 @@ module.exports = app => {
   router.get('/project/public', controller.project.indexOfPublic);
   router.get('/project/user/:userId', controller.project.indexOfUser);
   router.get('/project/join/:userId', controller.project.indexOfJoin);
+  router.get('/project/:id', controller.project.show);
   router.post('/project', controller.project.create);
+  router.post('/project/release/:id', controller.project.release);
   router.post('/project/hits/:id', controller.project.hits);
   router.put('/project/:id', controller.project.update);
   router.delete('/project/:id', controller.project.delete);
