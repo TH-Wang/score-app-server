@@ -9,8 +9,8 @@ class ResultController extends Controller {
     const { ctx } = this;
 
     const rules = {
-      projectId: 'number',
-      userId: 'number',
+      projectId: 'id',
+      userId: 'id',
       values: {
         type: 'array',
         itemType: 'object',
@@ -21,9 +21,9 @@ class ResultController extends Controller {
       },
     };
 
-    const { projectId, userId, values } = ctx.request.body;
-    ctx.validate(rules, { projectId, userId, values });
+    ctx.validate(rules, ctx.request.body);
 
+    const { projectId, userId, values } = ctx.request.body;
     // 自定义校验所有 result, 并整理所有数据
     const now = ctx.helper.getTime();
     for (let i = 0; i < values.length; i++) {
@@ -31,6 +31,9 @@ class ResultController extends Controller {
       if (!Object.prototype.hasOwnProperty.call(item, 'result')) {
         ctx.response.error(422, "every item in values must have a 'result' attribute", '参数错误');
         return;
+      }
+      if (Array.isArray(item.result)) {
+        item.result = JSON.stringify(item.result);
       }
       item.projectId = projectId;
       item.userId = userId;

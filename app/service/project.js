@@ -80,8 +80,8 @@ class ProjectService extends Service {
     `;
     let countSql = 'SELECT COUNT(1) AS total FROM projects';
 
-    const rowsWhere = {};
-    const countWhere = {};
+    const rowsWhere = { 'p.isTemplate': 1 };
+    const countWhere = { isTemplate: 1 };
 
     if (tag) {
       rowsWhere['p.tag'] = tag;

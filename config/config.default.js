@@ -26,7 +26,7 @@ module.exports = appInfo => {
 
   // jwt config
   config.jwt = {
-    ignore: /(login|register|template|public)/g,
+    ignore: /(login|register|template|public|auth)/g,
     // 密钥
     secret: '1545asd1z5cvsdf456a4sd8a5s1',
     // 过期事件，毫秒

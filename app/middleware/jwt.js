@@ -5,7 +5,6 @@ const reason = {
   0: '通过身份验证',
   '-1': '尊敬的用户，请您登录后再进行操作',
   '-2': '对不起用户，您的登录已超时，请您重新登录',
-  '-3': '对不起用户，您的登录已失效，请重新登录后重试',
 };
 
 module.exports = options => {
@@ -35,9 +34,8 @@ function jwt(secret, expire, token) {
   try {
     const payload = decrypt(secret, token);
     if (Date.now() - payload._sign > expire) return -2;
-    if (!payload.userId) return -3;
     return 0;
   } catch (error) {
-    return -3;
+    return -2;
   }
 }

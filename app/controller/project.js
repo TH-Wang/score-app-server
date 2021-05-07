@@ -80,7 +80,6 @@ class ProjectController extends Controller {
 
     // 校验参数
     const rules = {
-      userId: 'number',
       pname: 'string',
       isTemplate: [ '0', '1', 0, 1 ],
       needAuth: [ '0', '1', 0, 1 ],
@@ -110,6 +109,7 @@ class ProjectController extends Controller {
     const data = Object.assign({}, body, {
       createAt: datetime,
       updateAt: datetime,
+      state: 0,
     });
 
     // 插入数据库

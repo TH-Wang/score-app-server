@@ -1,6 +1,6 @@
 'use strict';
 const jwtConfig = require('../../config/config.default')({ name: '' }).jwt;
-const { encrypt } = require('../utils/crypt');
+const { encrypt, decrypt } = require('../utils/crypt');
 
 const Controller = require('egg').Controller;
 const unPwdRules = {
@@ -68,6 +68,24 @@ class UserController extends Controller {
       ctx.response.success(result, '查询成功');
     } else {
       ctx.response.fail(1001, '未找到', '对不起，该用户信息未找到');
+    }
+
+  }
+
+  // 验证用户token是否过期
+  async auth() {
+    try {
+      const { ctx } = this;
+      const { secret, expire } = jwtConfig;
+      ctx.validate({ token: 'string' }, ctx.request.body);
+
+      const { token } = ctx.request.body;
+      const { _sign } = decrypt(secret, token);
+      if (Date.now() - _sign > expire) {
+        ctx.response.fail(1001, '登录过期', '对不起用户，您的登录已失效，请重新登录后重试');
+      }
+    } catch (error) {
+      this.ctx.response.fail(1002, '身份不合法', '对不起用户，请检查是否已登录');
     }
 
   }
