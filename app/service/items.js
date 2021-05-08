@@ -9,9 +9,9 @@ class ItemsService extends Service {
     const { ctx, app } = this;
     const conn = await app.mysql.beginTransaction();
     let result = null;
+    let sort = null;
 
     try {
-      let sort = null;
       // 如果没有传入sort，则寻找出最大的sort值
       const sql = 'SELECT MAX(sort) AS value FROM items WHERE projectId=?';
       const max = await conn.query(sql, [ projectId ]);
@@ -40,7 +40,11 @@ class ItemsService extends Service {
 
     // console.log(result);
 
-    if (result.affectedRows === 1) return result.insertId;
+    if (result.affectedRows === 1) {
+      const res = { id: result.insertId, projectId, title, type, sort };
+      if (rest.options) res.options = rest.options;
+      return res;
+    }
     return null;
   }
 

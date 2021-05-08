@@ -13,6 +13,8 @@ module.exports = app => {
   router.post('/user/register/un', controller.user.registerByUsername);
   router.post('/user/login/pwd', controller.user.loginByPassword);
   router.post('/user/auth', controller.user.auth);
+  router.post('/company/apply', controller.user.applyCompany);
+  router.post('/user/multiple', controller.user.addUsers);
 
   router.get('/project/template', controller.project.index);
   router.get('/project/public', controller.project.indexOfPublic);

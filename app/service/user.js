@@ -37,6 +37,16 @@ class UserService extends Service {
     }
     return result.insertId;
   }
+
+  async createCompany(data) {
+    const result = await this.app.mysql.insert('companies', data);
+    await this.app.mysql.update('users', { isCompany: 1 }, { where: { id: data.userId } });
+    return result.insertId;
+  }
+
+  async addUsers(users) {
+    await this.app.mysql.insert('users', users);
+  }
 }
 
 module.exports = UserService;

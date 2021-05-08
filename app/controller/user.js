@@ -89,6 +89,32 @@ class UserController extends Controller {
     }
 
   }
+
+  // 申请企业用户
+  async applyCompany() {
+    const { ctx } = this;
+    const rules = {
+      userId: 'id',
+      cname: 'string',
+      telphone: 'string',
+      email: 'string',
+      address: 'string',
+      site: 'string?',
+      business: 'string?',
+    };
+
+    ctx.validate(rules, ctx.request.body);
+
+    const res = await ctx.service.user.createCompany(ctx.request.body);
+    ctx.response.success(res, '申请成功');
+  }
+
+  // 批量添加用户
+  async addUsers() {
+    const { ctx } = this;
+    await ctx.service.user.addUsers(ctx.request.body);
+    ctx.response.success(null, '添加成功');
+  }
 }
 
 module.exports = UserController;
